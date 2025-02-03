@@ -23,25 +23,16 @@
                 matchType==domain \
                 "url==$domain"
             '')
-            (writeShellScriptBin "archive-org-process" ''
+            (writeShellScriptBin "archive-org-urls" ''
               path=$1
               if [ -z "$path" ]; then
                 echo "usage: $0 <path>"
                 exit 1
               fi
 
-              jq '
-                def from_values($keys):
-                  [keys, .]
-                    | transpose
-                    | map({ key: .[0], value: .[1] })
-                    | from_entries;
-
-                .[0] as $keys
-                  | .[1:] as $values
-                  | $values
-                  | map(from_values($keys))
-              ' "$path"
+              jq -r '(.[0] | index("original")) as $index_original | .[1:][] | .[$index_original]' "$path" \
+                | sort \
+                | uniq
             '')
             (writeShellScriptBin "crt-sh" ''
               domain=$1
