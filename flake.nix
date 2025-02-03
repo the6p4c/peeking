@@ -10,7 +10,7 @@
         devShells.default = mkShell {
           packages = [
             httpie
-            (writeShellScriptBin "dump-archive-org" ''
+            (writeShellScriptBin "archive-org" ''
               domain=$1
               if [ -z "$domain" ]; then
                 echo "usage: $0 <domain>"
@@ -23,7 +23,7 @@
                 matchType==domain \
                 "url==$domain"
             '')
-            (writeShellScriptBin "process-archive-org" ''
+            (writeShellScriptBin "archive-org-process" ''
               path=$1
               if [ -z "$path" ]; then
                 echo "usage: $0 <path>"
@@ -43,7 +43,7 @@
                   | map(from_values($keys))
               ' "$path"
             '')
-            (writeShellScriptBin "dump-crt-sh" ''
+            (writeShellScriptBin "crt-sh" ''
               domain=$1
               if [ -z "$domain" ]; then
                 echo "usage: $0 <domain>"
@@ -53,6 +53,17 @@
               http -d 'https://crt.sh' \
                 output==json \
                 "q==$domain"
+            '')
+            (writeShellScriptBin "crt-sh-domains" ''
+              path=$1
+              if [ -z "$path" ]; then
+                echo "usage: $0 <path>"
+                exit 1
+              fi
+
+              jq -r 'map([.common_name, .name_value | split("\n")] | flatten) | flatten[]' "$path" \
+                | sort \
+                | uniq
             '')
           ];
         };
